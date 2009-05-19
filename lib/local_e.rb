@@ -14,16 +14,20 @@ module LocalE
         :locale => {
             :only_available => false,
             :set_time_zone => true,
-            :strip_variant => false,
+            :strip_variant => true,
             :ensure_format => :iso,
             :mappings => {
-              :com => 'en-US',
-              :net => 'en-US',
-              :nu => 'sv-SE'
+              :com => 'en',
+              :net => 'en',
+              :nu => 'sv'
             }
           },
         :time_zone => {
-            
+          },
+        :country => {
+            :ensure_format => :iso,
+            :mappings => {
+            }
           },
         :geoip_db_path => DEFAULT_GEOIP_DB_PATH,
         :whiny_logging => true
@@ -54,8 +58,28 @@ module LocalE
       YAML::load(File.open(File.join('..', 'config', 'i18n', "#{file_name}.yml")))
     end
     
+    # def ip_info(*args)
+    #       options, args = extract_options_with_defaults!(args, :ip => request.remote_ip)
+    #       if key = args.first
+    #         @geoip_db.lookup(options[:ip])[key.to_sym].strip rescue nil
+    #       else
+    #         @geoip_db.lookup(options[:ip]) rescue {}
+    #       end
+    #     end
+    
+    def country_from_locale(locale)
+      begin
+        locale_data = locale.split('-')
+        locale_data[1].upcase # Extract region
+        # TODO: check if valid country
+      rescue
+        nil
+      end
+    end
+    
     protected
     
+    # Alternative: http://www.iplocationtools.com
     def load_geoip_db
       if defined?(GeoIPCity)
         LocalE.log "gem loaded", 'geoip_city'
@@ -82,6 +106,49 @@ module LocalE
     
     include LocalE::Locale
     include LocalE::TimeZone
+    include LocalE::Country
+    
+    def ip_info(*args)
+      options, args = extract_options_with_defaults!(args, :ip => request.remote_ip)
+      if key = args.first
+        @geoip_db.lookup(options[:ip])[key.to_sym].strip rescue nil
+      else
+        @geoip_db.lookup(options[:ip]) rescue {}
+      end
+    end
+    def self.ip_info(*args)
+      self.ip_info(args)
+    end
+    
+    def session_value(key)
+      session[key.to_sym].strip rescue nil
+    end
+    
+    def params_value(key)
+      params[key.to_sym].strip rescue nil
+    end
+    
+    def http_accept_language
+      begin
+        header_data = http_accerequest.env['HTTP_ACCEPT_LANGUAGE'].split(',')
+        header.split(',').first.strip if header_data
+      rescue
+        nil
+      end
+    end
+    
+    def subdomain
+      subdomain.request.subdomains.first.strip rescue nil
+    end
+    
+    def top_level_domain
+      begin
+        host_data = request.host.split('.')
+        host_data.last.strip if host_data && host_data.size > 1
+      rescue
+        nil 
+      end
+    end
     
     protected
     
@@ -104,7 +171,7 @@ module LocalE
       
       I18n.locale = found_locale
     end
-    alias_method :set_locale, :set_locale_by
+    alias :set_locale :set_locale_by
     
     # set_time_zone_by :ip, @user.time_zone, :params, 'en', :default, ...
     def set_time_zone_by(*args)
@@ -113,7 +180,14 @@ module LocalE
       LocalE.log "SET_TIME_ZONE :using => %s" % args.to_json, 'time_zone'
       Time.zone = extract_time_zone(args.compact)
     end
-    alias_method :set_time_zone, :set_time_zone_by
+    alias :set_time_zone :set_time_zone_by
+    
+    def set_country_by(*args)
+      options, args = extract_options_with_defaults!(args)
+      args = fill_in_defaults(args, :defaults, DEFAULT_EXTRACT_COUNTRY_METHODS)
+      LocalE.log "SET_COUNTRY :using => %s" % args.to_json, 'country'
+    end
+    alias :set_country :set_country_by
     
     def extract_options_with_defaults!(args, defaults = {})
       options = args.extract_options!

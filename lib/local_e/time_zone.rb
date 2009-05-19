@@ -31,7 +31,7 @@ module LocalE
         unless time_zone.blank?
           LocalE.log "TIME ZONE found: #{method} => #{time_zone}", 'time_zone'
         else
-          LocalE.log "No TIME ZONE found with specified methods, using default: Time.zone => #{Time.zone}", 'time_zone'
+          LocalE.log "NO TIME ZONE found with specified methods, using default: Time.zone => #{Time.zone}", 'time_zone'
         end
         
         time_zone ||= extract_time_zone_from_default
@@ -51,30 +51,32 @@ module LocalE
       end
       
       def extract_time_zone_from_params
-        parsed_time_zone = params[:time_zone].strip rescue nil
+        parsed_time_zone = self.params_value(:time_zone)
         LocalE.log_result 'params[:time_zone]', params[:time_zone], parsed_time_zone, 'no valid params value', 'time_zone'
         parsed_time_zone
       end
       
       def extract_time_zone_from_session
-        parsed_time_zone = session[:time_zone].strip rescue nil
+        parsed_time_zone = self.session_value(:time_zone)
         LocalE.log_result 'session[:time_zone]', session[:time_zone], parsed_time_zone, 'no valid session value', 'time_zone'
         parsed_time_zone
       end
       
+      # http://ws.geonames.org/timezone?lat=47.01&lng=10.2
       def extract_time_zone_from_ip
-        begin
-          location = LocalE.geoip_db.look_up(request.remote_ip)
-          parsed_time_zone = location[:city].strip rescue nil
-        rescue
-          parsed_time_zone = nil
-        end
+        parsed_time_zone = self.ip_info(:city)
         LocalE.log_result 'ip', request.remote_ip, parsed_time_zone, 'unknown ip location', 'time_zone'
         parsed_time_zone
       end
       
-      def valid_format_of_time_zone?(iso_time_zone)
-        !iso_time_zone.blank?
+      # NOTE: To messy to implement
+      
+      def valid_format_of_time_zone?(value)
+        !value.blank?
+      end
+      
+      def isofy(value)
+        value
       end
       
     end

@@ -28,7 +28,7 @@ module LocalE
         unless phone_prefix.blank?
           LocalE.log "PHONE PREFIX found: #{method} => #{phone_prefix}", 'phone_prefix'
         else
-          LocalE.log "No PHONE PREFIX found with specified methods, using default: nil", 'phone_prefix'
+          LocalE.log "NO PHONE PREFIX found with specified methods, using default: nil", 'phone_prefix'
         end
         
         phone_prefix ||= extract_phone_prefix_from_default
@@ -68,8 +68,12 @@ module LocalE
         end
       end
       
-      def valid_format_of_phone_prefix?(iso_phone_prefix)
-        iso_phone_prefix.blank? ? false : (iso_phone_prefix =~ /^[0-9]{1,4}$/)
+      def valid_format_of_phone_prefix?(value)
+        value.blank? ? false : (value =~ /^[0-9]{1,4}$/)
+      end
+      
+      def isofy(value)
+        value.to_i
       end
       
     end

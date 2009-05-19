@@ -28,7 +28,7 @@ module LocalE
         unless currency.blank?
           LocalE.log "CURRENCY found: #{method} => #{currency}", 'currency'
         else
-          LocalE.log "No CURRENCY found with specified methods, using default: nil", 'currency'
+          LocalE.log "NO CURRENCY found with specified methods, using default: nil", 'currency'
         end
         
         currency ||= extract_currency_from_default
@@ -50,13 +50,13 @@ module LocalE
       end
       
       def extract_currency_from_params
-        parsed_currency = params[:currency].strip rescue nil
+        parsed_currency = self.params_value(:currency)
         LocalE.log_result 'params[:currency]', params[:currency], parsed_currency, 'no valid params value', 'currency'
         parsed_currency
       end
       
       def extract_currency_from_session
-        parsed_currency = session[:currency].strip rescue nil
+        parsed_currency = self.session_value(:currency)
         LocalE.log_result 'session[:currency]', session[:currency], parsed_currency, 'no valid session value', 'currency'
         parsed_currency
       end
@@ -71,7 +71,6 @@ module LocalE
         @currencies ||= load_currencies
       end
       
-      # Data: http://en.wikipedia.org/wiki/ISO_4217
       def load_currencies
         begin
           LocalE.load_yaml('currency_by_country').sort_by { |c| c.last }.collect { |c| {:country => c.first, :prefix => c.last} }
@@ -80,8 +79,12 @@ module LocalE
         end
       end
       
-      def valid_format_of_currency?(iso_currency)
-        iso_currency.blank? ? false : (iso_currency =~ /^[A-Z]{3}$/)
+      def valid_format_of_currency?(value)
+        value.blank? ? false : (value =~ /^[A-Z]{3}$/)
+      end
+      
+      def isofy(value)
+        value.to_s.upcase
       end
       
     end

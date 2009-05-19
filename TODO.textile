@@ -1,3 +1,8 @@
 h1. TODO
 
-* Make use of info from: http://www.unicode.org/cldr/data/charts/summary/sv.html?hide
+* Make use of data from? http://www.geonames.org/
+* Make use of info from? http://www.unicode.org/cldr/data/charts/summary/sv.html?hide
+
+* country info: http://download.geonames.org/export/dump/countryInfo.txt
+
+* globe: http://ws.geonames.org/children?geonameId=6295630
